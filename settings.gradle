@@ -1,1 +1,1 @@
-include ':app', ':runtime_annotation', ':class_annotation'
+include ':sample', ':runtime_annotation', ':compiler', ':annotation', ':api'
