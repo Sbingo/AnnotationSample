@@ -1,6 +1,6 @@
-package com.sbingo.runtime_annotation;
+package com.sbingo.runtime_annotation.annotation;
 
-import android.support.annotation.IdRes;
+import android.support.annotation.LayoutRes;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -13,7 +13,7 @@ import java.lang.annotation.Target;
  */
 
 @Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.FIELD)
-public @interface AttachView {
-    @IdRes int value();
+@Target(ElementType.TYPE)
+public @interface ContentView {
+    @LayoutRes int value();
 }
