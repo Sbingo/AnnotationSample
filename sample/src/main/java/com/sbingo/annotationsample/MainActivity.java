@@ -1,4 +1,4 @@
-package com.sbingo.annotationsample.runtime_sample;
+package com.sbingo.annotationsample;
 
 import android.os.Bundle;
 import android.support.annotation.Nullable;
@@ -11,7 +11,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.sbingo.BindView;
-import com.sbingo.annotationsample.R;
 import com.sbingo.api.ViewInjector;
 import com.sbingo.runtime_annotation.RuntimeInjectUtils;
 import com.sbingo.runtime_annotation.annotation.AttachView;

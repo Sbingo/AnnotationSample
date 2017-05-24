@@ -32,6 +32,6 @@ public class ViewInjector {
         } catch (IllegalAccessException e) {
             e.printStackTrace();
         }
-        throw new RuntimeException(String.format("can not find %s , something when compiler.", activity.getClass().getSimpleName() + SUFFIX));
+        throw new RuntimeException(String.format("can not find %s , something must be wrong while compiling.", activity.getClass().getSimpleName() + SUFFIX));
     }
 }

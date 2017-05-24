@@ -5,17 +5,14 @@ import com.google.auto.service.AutoService;
 import java.io.IOException;
 import java.io.Writer;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 
 import javax.annotation.processing.AbstractProcessor;
-import javax.annotation.processing.Messager;
-import javax.annotation.processing.ProcessingEnvironment;
+import javax.annotation.processing.Filer;
 import javax.annotation.processing.Processor;
 import javax.annotation.processing.RoundEnvironment;
-import javax.lang.model.SourceVersion;
+import javax.annotation.processing.SupportedAnnotationTypes;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.TypeElement;
@@ -30,49 +27,27 @@ import javax.tools.JavaFileObject;
  */
 
 @AutoService(Processor.class)
+@SupportedAnnotationTypes({"com.sbingo.BindView"})
 public class ViewInjectProcessor extends AbstractProcessor {
 
-    private Messager messager;
-    private Elements elementUtils;
     private Map<String, ProxyInfo> mProxyMap = new HashMap<String, ProxyInfo>();
 
     @Override
-    public synchronized void init(ProcessingEnvironment processingEnv) {
-        super.init(processingEnv);
-        messager = processingEnv.getMessager();
-        elementUtils = processingEnv.getElementUtils();
-    }
-
-    @Override
-    public Set<String> getSupportedAnnotationTypes() {
-        HashSet<String> supportTypes = new LinkedHashSet<>();
-        supportTypes.add(BindView.class.getCanonicalName());
-        return supportTypes;
-    }
-
-    @Override
-    public SourceVersion getSupportedSourceVersion() {
-        return SourceVersion.latestSupported();
-    }
-
-    @Override
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
-        messager.printMessage(Diagnostic.Kind.NOTE, "process...");
+        processingEnv.getMessager().printMessage(Diagnostic.Kind.NOTE, "process...");
         mProxyMap.clear();
-
-        Set<? extends Element> elesWithBind = roundEnv.getElementsAnnotatedWith(BindView.class);
-        for (Element element : elesWithBind) {
+        Elements elements = processingEnv.getElementUtils();
+        Filer filer = processingEnv.getFiler();
+        Set<? extends Element> elementsWithBind = roundEnv.getElementsAnnotatedWith(BindView.class);
+        for (Element element : elementsWithBind) {
             checkAnnotationValid(element, BindView.class);
-
             VariableElement variableElement = (VariableElement) element;
-            //class type
             TypeElement classElement = (TypeElement) variableElement.getEnclosingElement();
-            //full class name
             String fqClassName = classElement.getQualifiedName().toString();
-
+            //One Activity or Fragment needs one ProxyInfo
             ProxyInfo proxyInfo = mProxyMap.get(fqClassName);
             if (proxyInfo == null) {
-                proxyInfo = new ProxyInfo(elementUtils, classElement);
+                proxyInfo = new ProxyInfo(elements, classElement);
                 mProxyMap.put(fqClassName, proxyInfo);
             }
 
@@ -84,7 +59,7 @@ public class ViewInjectProcessor extends AbstractProcessor {
         for (String key : mProxyMap.keySet()) {
             ProxyInfo proxyInfo = mProxyMap.get(key);
             try {
-                JavaFileObject jfo = processingEnv.getFiler().createSourceFile(
+                JavaFileObject jfo = filer.createSourceFile(
                         proxyInfo.getProxyClassFullName(),
                         proxyInfo.getTypeElement());
                 Writer writer = jfo.openWriter();
@@ -96,7 +71,6 @@ public class ViewInjectProcessor extends AbstractProcessor {
                         "Unable to write injector for type %s: %s",
                         proxyInfo.getTypeElement(), e.getMessage());
             }
-
         }
         return true;
     }
@@ -107,7 +81,7 @@ public class ViewInjectProcessor extends AbstractProcessor {
             return false;
         }
         if (ClassValidator.isPrivate(annotatedElement)) {
-            error(annotatedElement, "%s() must can not be private.", annotatedElement.getSimpleName());
+            error(annotatedElement, "field \"%s\" must can not be private.", annotatedElement.getSimpleName());
             return false;
         }
         return true;
