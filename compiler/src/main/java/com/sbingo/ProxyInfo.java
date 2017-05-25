@@ -1,8 +1,15 @@
 package com.sbingo;
 
+import com.squareup.javapoet.ClassName;
+import com.squareup.javapoet.JavaFile;
+import com.squareup.javapoet.MethodSpec;
+import com.squareup.javapoet.ParameterizedTypeName;
+import com.squareup.javapoet.TypeSpec;
+
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.lang.model.element.Modifier;
 import javax.lang.model.element.PackageElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
@@ -61,6 +68,35 @@ public class ProxyInfo {
             builder.append(space8 + "}\n");
         }
         builder.append(space4 + "}\n");
+    }
+
+    JavaFile getJavaFile() {
+        MethodSpec.Builder methodBuilder = null;
+        methodBuilder = MethodSpec.methodBuilder("inject")
+                .addAnnotation(Override.class)
+                .addModifiers(Modifier.PUBLIC)
+                .returns(void.class)
+                .addParameter(ClassName.get(packageName, "MainActivity"), "host")
+                .addParameter(Object.class, "source");
+        for (int id : injectVariables.keySet()) {
+            VariableElement element = injectVariables.get(id);
+            String name = element.getSimpleName().toString();
+            String type = element.asType().toString();
+            methodBuilder.addCode("if (source instanceof android.app.Activity) {\n")
+                    .addStatement("host.$L = ($T) (((android.app.Activity) source).findViewById($L))", name, ClassName.get("android.widget", "TextView"), id)
+                    .addCode("} else {\n")
+                    .addStatement("host.$L = ($T) (((android.view.View) source).findViewById($L))", name, ClassName.get("android.widget", "TextView"), id)
+                    .addCode("}\n");
+        }
+        TypeSpec classGenerated = TypeSpec.classBuilder(proxyClassName)
+                .addModifiers(Modifier.PUBLIC)
+                .addSuperinterface(ParameterizedTypeName.get(ClassName.get("com.sbingo.api", PROXY), ClassName.get(packageName, "MainActivity")))
+                .addMethod(methodBuilder.build())
+                .build();
+        JavaFile javaFile = JavaFile.builder(packageName, classGenerated)
+                .addFileComment("Generated code from sbingo. Do not modify!!!")
+                .build();
+        return javaFile;
     }
 
     public String getProxyClassFullName() {

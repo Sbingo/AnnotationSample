@@ -3,7 +3,6 @@ package com.sbingo;
 import com.google.auto.service.AutoService;
 
 import java.io.IOException;
-import java.io.Writer;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -19,7 +18,6 @@ import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
 import javax.lang.model.util.Elements;
 import javax.tools.Diagnostic;
-import javax.tools.JavaFileObject;
 
 /**
  * Author: Sbingo
@@ -59,13 +57,7 @@ public class ViewInjectProcessor extends AbstractProcessor {
         for (String key : mProxyMap.keySet()) {
             ProxyInfo proxyInfo = mProxyMap.get(key);
             try {
-                JavaFileObject jfo = filer.createSourceFile(
-                        proxyInfo.getProxyClassFullName(),
-                        proxyInfo.getTypeElement());
-                Writer writer = jfo.openWriter();
-                writer.write(proxyInfo.generateJavaCode());
-                writer.flush();
-                writer.close();
+               proxyInfo.getJavaFile().writeTo(filer);
             } catch (IOException e) {
                 error(proxyInfo.getTypeElement(),
                         "Unable to write injector for type %s: %s",
